@@ -1,0 +1,11 @@
+{
+  "name": "model-behavior-eval",
+  "private": true,
+  "scripts": {
+    "eval": "node build-prompt.js && npx promptfoo eval",
+    "view": "npx promptfoo view"
+  },
+  "dependencies": {
+    "promptfoo": "^0.120.19"
+  }
+}

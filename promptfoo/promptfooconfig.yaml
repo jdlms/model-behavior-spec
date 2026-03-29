@@ -1,0 +1,272 @@
+description: "Model Behavior Spec - Code Eval"
+
+prompts:
+  - file://prompts/chat.json
+
+providers:
+  - id: mistral:devstral-small-latest
+    label: "Devstral Small"
+    config:
+      temperature: 0.3
+  - id: mistral:devstral-latest
+    label: "Devstral"
+    config:
+      temperature: 0.3
+  - id: mistral:codestral-latest
+    label: "Codestral"
+    config:
+      temperature: 0.3
+
+# Grading provider — the LLM that judges responses against rubrics.
+defaultTest:
+  options:
+    provider: mistral:mistral-large-latest
+
+# ---------------------------------------------------------------------------
+# Test cases
+# ---------------------------------------------------------------------------
+# Each test maps to a sample from spec/evals/samples/.
+# Assertions use criterion IDs as metric labels for traceability.
+# ---------------------------------------------------------------------------
+
+tests:
+  # === Code Understanding ===================================================
+
+  # CU-S1 — Python, short. Basic language features.
+  - description: "CU-S1 — List comprehension with enumerate (Python)"
+    vars:
+      prompt: |
+        I have the following Python code snippet and would like an explanation of how it works, particularly the use of list comprehensions and the enumerate function.
+
+        ```python
+        words = ["apple", "banana", "cherry", "date"]
+        indexed_words = [(index, word) for index, word in enumerate(words) if len(word) > 4]
+        print(indexed_words)
+        ```
+
+        Please explain:
+        What does the enumerate function do?
+        How does the list comprehension work in this context?
+        What is the purpose of the if len(word) > 4 condition?
+    assert:
+      - type: llm-rubric
+        value: "Response must limit response to explanation of the existing code. No need to make suggestions."
+        metric: CU-1
+      - type: llm-rubric
+        value: "Response must answer the question asked."
+        metric: CU-2
+      - type: llm-rubric
+        value: "Response must correctly trace data flow through boundaries. Follow variables, follow values through function calls, pay attention to mutations."
+        metric: CU-4
+      - type: llm-rubric
+        value: "Response must correctly trace control flow."
+        metric: CU-5
+      - type: llm-rubric
+        value: "Response must offer a concise and direct summary of the code's result. Accurately predict runtime behavior."
+        metric: CU-6
+
+  # CU-S2 — JavaScript, short. Falsy values, chained methods.
+  - description: "CU-S2 — filter(Boolean) and .at (JS)"
+    vars:
+      prompt: |
+        Could you explain to me what filter does, what is considered a boolean value in JavaScript and what the .at is doing? I'm not familiar with it.
+
+        ```js
+        const items = [0, "peach", null, "pear", "", undefined];
+        const getFirst = (items) => items.filter(Boolean).at(0);
+        ```
+    assert:
+      - type: llm-rubric
+        value: "Response must limit response to explanation of the existing code. No need to make suggestions."
+        metric: CU-1
+      - type: llm-rubric
+        value: "Response must answer the question asked."
+        metric: CU-2
+      - type: llm-rubric
+        value: "Response must correctly trace data flow through boundaries. Follow variables, follow values through function calls, pay attention to mutations."
+        metric: CU-4
+      - type: llm-rubric
+        value: "Response must offer a concise and direct summary of the code's result. Accurately predict runtime behavior."
+        metric: CU-6
+      - type: llm-rubric
+        value: "Response must flag sentinel value ambiguity. For example where the value signaling \"nothing\" (null, -1, undefined) overlaps with legitimate data. Or in JS/TS: loose checks like if (!value) when 0, \"\", or false are valid. Always check against the exact sentinel."
+        metric: CU-12
+
+  # CU-S3 — Python, short. String method chaining.
+  - description: "CU-S3 — Whitespace normalizer (Python)"
+    vars:
+      prompt: |
+        What does each chained method do in the return statement? What would the output be for the input?
+
+        ```js
+        def clean(text):
+            return " ".join(text.strip().split())
+
+        print(clean("  hello   world  "))
+        ```
+    assert:
+      - type: llm-rubric
+        value: "Response must answer the question asked."
+        metric: CU-2
+      - type: llm-rubric
+        value: "Response must be factually accurate, answer must be directly focused on the code."
+        metric: CU-3
+      - type: llm-rubric
+        value: "Response must correctly trace data flow through boundaries. Follow variables, follow values through function calls, pay attention to mutations."
+        metric: CU-4
+      - type: llm-rubric
+        value: "Response must correctly trace control flow."
+        metric: CU-5
+      - type: llm-rubric
+        value: "Response must offer a concise and direct summary of the code's result. Accurately predict runtime behavior."
+        metric: CU-6
+
+  # CU-S4 — TypeScript, medium. Side effects, bug, implicit assumptions.
+  - description: "CU-S4 — Session cache walkthrough (TS)"
+    vars:
+      prompt: |
+        Can you walk me through how this cache works? What happens when getOrCreate is called and the key is expired?
+
+        ```ts
+        type CacheEntry = { value: any; ts: number };
+
+        const store: Map<string, CacheEntry> = new Map();
+        const DEFAULT_TTL = 300;
+
+        function cacheGet(key: string, ttl: number = DEFAULT_TTL): any {
+          const entry = store.get(key);
+          if (entry && Date.now() - entry.ts < ttl * 1000) {
+            return entry.value;
+          }
+          store.delete(key);
+          return null;
+        }
+
+        function cacheSet(key: string, value: any): void {
+          store.set(key, { value, ts: Date.now() });
+        }
+
+        function getOrCreate(key: string, factory: () => any, ttl: number = DEFAULT_TTL): any {
+          const value = cacheGet(key, ttl);
+          if (!value) {
+            const newValue = factory();
+            cacheSet(key, newValue);
+            return newValue;
+          }
+          return value;
+        }
+        ```
+    assert:
+      - type: llm-rubric
+        value: "Response must correctly trace data flow through boundaries. Follow variables, follow values through function calls, pay attention to mutations."
+        metric: CU-4
+      - type: llm-rubric
+        value: "Response must correctly trace control flow."
+        metric: CU-5
+      - type: llm-rubric
+        value: "Response must identify side effects when present."
+        metric: CU-7
+      - type: llm-rubric
+        value: "Response must flag sentinel value ambiguity. For example where the value signaling \"nothing\" (null, -1, undefined) overlaps with legitimate data. Or in JS/TS: loose checks like if (!value) when 0, \"\", or false are valid. Always check against the exact sentinel."
+        metric: CU-12
+
+  # === Code Review ==========================================================
+
+  # CR-S1 — Python, short. Basic review.
+  - description: "CR-S1 — Factorial function review (Python)"
+    vars:
+      prompt: |
+        I have the following Python code that calculates the factorial of a number. Could you review it and suggest areas of improvement or optimization?
+
+        ```python
+        def factorial(n):
+            if n == 0:
+                return 1
+            else:
+                result = 1
+                for i in range(1, n + 1):
+                    result *= i
+                return result
+        ```
+    assert:
+      - type: llm-rubric
+        value: "Response must scope feedback to what's reviewable from the provided context (not speculate about code that is not visible)."
+        metric: CR-1
+      - type: llm-rubric
+        value: "Response must provide accurate and correct suggestions that improve the user's code."
+        metric: CR-2
+      - type: llm-rubric
+        value: "Response must ensure that logical correctness is not in disharmony with stated intent. For example if the code throws no errors, and would compile but the logic is wrong."
+        metric: CR-6
+      - type: llm-rubric
+        value: "Response must identify common footguns and gotchas."
+        metric: CR-8
+
+  # CR-S2 — Python, short. Broad error handling, hardcoded secret.
+  - description: "CR-S2 — API client with swallowed errors (Python)"
+    vars:
+      prompt: |
+        I'm concerned about how this handles failure. Can you review the error handling and anything else that stands out?
+
+        ```python
+        import requests
+
+        API_URL = "https://api.example.com/v1"
+        TIMEOUT = 30
+
+        def get_user_profile(user_id):
+            try:
+                response = requests.get(
+                    f"{API_URL}/users/{user_id}",
+                    headers={"Authorization": "Bearer sk-1234-abcd-5678"},
+                    timeout=TIMEOUT
+                )
+                response.raise_for_status()
+                return response.json()
+            except Exception:
+                return None
+        ```
+    assert:
+      - type: llm-rubric
+        value: "Response must favor defensive coding: ensure that errors are caught and logged at every failure point."
+        metric: CR-9
+      - type: llm-rubric
+        value: "Response must avoid suggesting overly broad error handling that swallows or compresses distinct error types."
+        metric: CR-10
+      - type: llm-rubric
+        value: "Response must identify sentinel value ambiguity. For example where the value signaling \"nothing\" (null, -1, undefined) overlaps with legitimate data. Or in JS/TS: loose checks like if (!value) when 0, \"\", or false are valid. Always check against the exact sentinel."
+        metric: CR-19
+      - type: llm-rubric
+        value: "Response must identify any hardcoded keys and if present always recommend proper handling of environment secrets."
+        metric: CR-12
+      - type: llm-rubric
+        value: "Response must identify security vulnerabilities, for example SQL injections, hardcoded credentials, HTML injections, and XSS."
+        metric: CR-17
+      - type: llm-rubric
+        value: "Response must identify common footguns and gotchas."
+        metric: CR-8
+
+  # CR-S3 — TypeScript, very short. Name vs logic mismatch.
+  - description: "CR-S3 — Misleading function name (TS)"
+    vars:
+      prompt: |
+        Something feels off about this function. Can you take a look?
+
+        ```typescript
+        function isEven(numbers: number[]): boolean[] {
+          return numbers.map(n => n % 2 !== 0);
+        }
+        ```
+    assert:
+      - type: llm-rubric
+        value: "Response must scope feedback to what's reviewable from the provided context (not speculate about code that is not visible)."
+        metric: CR-1
+      - type: llm-rubric
+        value: "Response must ensure that logical correctness is not in disharmony with stated intent. For example if the code throws no errors, and would compile but the logic is wrong."
+        metric: CR-6
+      - type: llm-rubric
+        value: "Response must ensure naming choices correspond generally to what the code does."
+        metric: CR-7
+      - type: llm-rubric
+        value: "Response must callout and explain bugs."
+        metric: CR-18
