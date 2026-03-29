@@ -22,6 +22,7 @@ A brief model behavior spec for three user intents related to code:
 - More robust pass/fail examples for every criteria should be added
 - Ideally there would be more code samples, more criteria
 - Add a judge prompt specifically for the user intents. Currently the judge prompt is borrowed and slightly modified from Promptfoo. 
+- Use of Promptfoo is very basic and naive, could be greatly improved to drive criteria.
 
 ## File tree
 ```
