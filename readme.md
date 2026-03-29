@@ -16,11 +16,12 @@ A brief model behavior spec for three user intents related to code:
 
 ## Todos & room for improvement:
 
-- A taxonomy of the many common ways that code fails, or that models can fail when discussing code in chat would be very helpful to create and have.
+- Add a taxonomy of the many common ways that code fails, or that models can fail when discussing code in chat.
+- Add `agentic` user intent where the model is required to actively use tools. This requires it's own category of criteria, evals, and style guide. 
 - The style guide is written to my own preferences and tastes. Ideally it would be shaped and directed by a product vision and data.
-- Robust pass/fail examples for every criteria should be added
+- More robust pass/fail examples for every criteria should be added
 - Ideally there would be more code samples, more criteria
-- There are other user intents, such as Agentic where the user expects the model to actively use tools. This requires it's own category of criteria, evals, and style guide. 
+- Add a judge prompt specifically for the user intents. Currently the judge prompt is borrowed and slightly modified from Promptfoo. 
 
 ## File tree
 ```
