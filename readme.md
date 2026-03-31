@@ -10,8 +10,8 @@ A brief model behavior spec for three user intents related to code:
 ## Approach
 
 - Criteria holds distinct sets of requirements that relevant model responses must follow 
-- Evals holds a small number of code samples for each user intent, and grading guidance for an llm judge. A rubric outlining the format and scale, a prompt, and examples suggesting which criteria are relevant for each code sample, as well as what a good response would contain.
-- Style guide is an attempt to shape the model's voice and tone, the format it responds in, the persona it should adopt.
+- Evals holds a small number of code samples for each user intent, a rubric outlining the format and scale, a prompt, and examples suggesting which criteria are relevant for each code sample.
+- Style guide is an attempt to shape the model's voice and tone, the format it responds in, and the persona it should adopt.
 - I added a simple, naive Promptfoo setup where I could directly test criteria and style guide against model responses. This was helpful for iterating and as a result I discovered many of my initial criteria were poorly worded, vague, or lacked clear signal.
 
 ## Todos & room for improvement:
