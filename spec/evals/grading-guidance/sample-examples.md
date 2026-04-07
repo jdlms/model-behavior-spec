@@ -12,7 +12,7 @@ Sample - User intent type - number
 CR-S1:
 - Correct code - The response should provide useful feedback without inventing problems. - CR-1
 - Standard library - `math.factorial` exists in the standard library and this example reimplements it. A good response should mention this without insisting on it. - CR-2
-- Input validation - Negative numbers and non-integers are no handled. `factorial(-5)` silently returns `1`. - CR-8, CR-6
+- Input validation - Negative numbers and non-integers are not handled. `factorial(-5)` silently returns `1`. - CR-8, CR-6
 
 CR-S2:
 - Error handling - `except Exception` is swallowing all failure types into a silent `None`. - CR-9, CR-10, CR-19
@@ -39,7 +39,6 @@ CU-S2:
 CU-S3: 
 - Method chain - The response must explain `strip`, `split`, and `join` individually, in order - CU-2, CU-5
 - Correct output - `strip` removes leading/trailing whitespace, `split` with no args splits on any whitespace run, `join` reassembles with single spaces. Output is `"hello world"` - CU-4, CU-6
-- Language mismatch - The code block is labeled `js` but the code is Python. The model should note this rather than silently ignore it - CU-3
 
 CU-S4: 
 - Data flow - `getOrCreate` calls `cacheGet`, which checks timestamp against TTL. On miss or expiry, `cacheGet` deletes the stale entry and returns `null`, then `getOrCreate` calls `factory` and `cacheSet` to repopulate - CU-4, CU-5
